@@ -1,0 +1,7 @@
+Main
+brainless
+*.b
+*.c
+a.out
+**/*.hi
+**/*.o
