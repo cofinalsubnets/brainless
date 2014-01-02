@@ -2,7 +2,6 @@ module Brainless.Interpret
 ( Brainfuck(..)
 , Condition(..)
 , brainfuck
-, interpret
 , run
 , step
 , command
@@ -19,9 +18,6 @@ data Condition = OOB | UnmatchedDelimiter | EOF | EOP
 
 brainfuck :: String -> String -> Brainfuck
 brainfuck p i = BF ([], repeat '\0') ("", p) [] i ""
-
-interpret :: String -> String -> Either Condition String
-interpret = (run .) . brainfuck
 
 run :: Brainfuck -> Either Condition String
 run b = case step b of Right b' -> run b'
@@ -53,23 +49,30 @@ command cmd = case cmd of
     moveRight b = right (mem b) >>= \m' -> return b {mem=m'}
 
     incr bf@BF{mem=(a,b:c)} = return bf {mem=(a,succ b:c)}
+    incr _ = Left OOB
+
     decr bf@BF{mem=(a,b:c)} = return bf {mem=(a,pred b:c)}
+    decr _ = Left OOB
 
     bfread bf@BF{mem=(a,_:c), input=h:t} = return bf{mem=(a,h:c), input=t}
-    bfread _ = Left EOF
+    bfread BF{input=[]} = Left EOF
+    bfread _ = Left OOB
 
     bfwrite bf@BF{mem=(_,m:_)} = return bf {output=m:output bf}
+    bfwrite _ = Left OOB
 
     startLoop bf@BF{mem=(_,m:_)} = skipLoop (prog bf) >>= \p ->
       if m == '\0' then return bf { prog = p }
                    else return bf {lstack = prog bf : lstack bf}
+    startLoop _ = Left OOB
 
     endLoop bf@BF{mem=(_,m:_)} = case lstack bf of
       [] -> Left UnmatchedDelimiter
       (h:hs) -> return $ if m == '\0' then bf { lstack = hs }
                                       else bf { prog = h }
+    endLoop _ = Left OOB
       
-    skipLoop = skip (-1)
+    skipLoop = skip (-1 :: Int)
       where skip _ (_,[]) = Left UnmatchedDelimiter
             skip n p@(_,c:_) = case c of
               ']' -> if n == 0 then return p else right p >>= skip (n-1)
@@ -83,4 +86,3 @@ right _          = Left OOB
 left :: Z a -> Either Condition (Z a)
 left (l0:ls,rs) = return (ls,l0:rs)
 left _          = Left OOB
-

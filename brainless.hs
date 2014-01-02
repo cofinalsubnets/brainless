@@ -19,7 +19,7 @@ main = getArgs >>= parseArgs >>= execute
 
 parseArgs :: [String] -> IO Options
 parseArgs args = case getOpt Permute options args of
-  (os,[f],[]) -> return $ foldr ($) defaultOptions{infile = f} os
+  (os,[f],[]) -> return $ foldr ($) (defaultsForFile f) os
   (_,_,es) -> mapM_ putStr es >> printUsage >> exitFailure
 
 printUsage :: IO ()
@@ -28,8 +28,8 @@ printUsage = do
   let header = "Usage: " ++ pn ++ " [OPTIONS] INFILE"
   putStr $ usageInfo header options
 
-defaultOptions :: Options
-defaultOptions = O defaultFlags "" Nothing False False False
+defaultsForFile :: FilePath -> Options
+defaultsForFile f = O defaultFlags f Nothing False False False
 
 execute :: Options -> IO ()
 execute o
@@ -76,7 +76,7 @@ options = [ Option "e" ["execute"]
           , Option "" ["static"]
             (ReqArg (\n o -> o{cflags = (cflags o){memType = Static (read n)}})
              "SIZE")
-            "use SIZE static cells (default with SIZE=3000)"
+            "use SIZE static cells (default with SIZE=30000)"
           , Option "" ["dynamic"]
             (NoArg (\o -> o{cflags = (cflags o){memType = Dynamic}}))
             "use dynamically allocated cells"

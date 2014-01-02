@@ -11,7 +11,7 @@ data CellType = Char | WChar | Int | Long
 data CompileFlags = C { memType :: MemType, cellType :: CellType }
 
 defaultFlags :: CompileFlags
-defaultFlags = C (Static 3000) Char
+defaultFlags = C (Static 30000) Char
 
 compile :: CompileFlags -> String -> String
 compile cf = super cf . base

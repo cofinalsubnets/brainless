@@ -23,7 +23,7 @@ summarize (Debug (s0,s1) es) =
     lastState = last s1
     nstates   = length s0 + length s1
     out       = reverse $ output lastState
-    lastCmd   = show . succ . length . fst $ prog lastState
+    lastCmd   = show . length . fst $ prog lastState
     finish    = (++ lastCmd) $ case es of
       EOP                -> "ends normally after command "
       EOF                -> "hits EOF at command "
@@ -41,9 +41,11 @@ trace (Debug (s0,s1) e) =
                           ["ERROR: unmatched loop delimiter"]
 
 showState :: Brainfuck -> String
-showState (BF (mp, m0:_) p _ _ o) = intercalate " | " $
-  [cmd, show m0 ++ " (" ++ show (length mp) ++ ")", show (reverse o)]
+showState (BF m p _ _ o) = intercalate " | " [cmd, cell, show (reverse o)]
   where cmd = case p of
           (_,[])    -> "<final>"
           (pp,p0:_) -> show p0 ++ " (" ++ show (succ $ length pp) ++ ")"
+        cell = case m of
+          (_,[]) -> "<OOB>"
+          (mp,m0:_) -> show m0 ++ " (" ++ show (length mp) ++ ")"
 
